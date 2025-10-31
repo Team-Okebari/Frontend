@@ -1,32 +1,41 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../../../components/common/Button";
 import { Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../../../api/axiosInstance";
+import useAuthStore, { saveAccessTokenToState } from "../../../store/authStore";
+import * as axios from "axios";
 
 export default function LoginPage() {
 
   const navigate = useNavigate();
+  const { accessToken } = useAuthStore();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
-  // 로그인 함수들
-  const handleKakaoLogin = () => {
-    console.log("카카오로 로그인");
-  }
+  useEffect(() => {
+    if (accessToken) {
+      navigate('/main', { replace: true });
+    }
+  }, [accessToken, navigate]);
 
-  const handleNaverLogin = () => {
-    console.log("네이버로 로그인");
-  }
-
-  const handleGoogleLogin = () => {
-    console.log("구글로 로그인");
-  }
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setEmail("");
-    setPassword("");
-    console.log(`로그인 시도 : ${email}, ${password}`);
-    navigate('/', {replace: true})
+    setError(""); // 에러 메시지 초기화
+    try {
+      const response = await axiosInstance.post('/api/auth/login', { email, password });
+      const { accessToken } = response.data.data;
+
+      saveAccessTokenToState(accessToken);
+      navigate('/', { replace: true });
+    } catch (err: unknown) {
+      console.error("로그인 실패:", err);
+      if (axios.isAxiosError(err) && err.response) {
+        setError(err.response.data?.error?.message || "이메일 또는 비밀번호가 일치하지 않습니다.");
+      } else {
+        setError("로그인 중 알 수 없는 오류가 발생했습니다.");
+      }
+    }
   }
 
   return (
@@ -42,29 +51,32 @@ export default function LoginPage() {
 
         {/* SNS 로그인 */}
         <div className="space-y-1.5 py-6">
-          <Button
-            size="large"
-            fullWidth
-            bgColor="bg-kakao-yellow"
-            onClick={handleKakaoLogin}
-            >
-            카카오로 시작하기
-          </Button>
-          <Button
-            size="large"
-            fullWidth
-            bgColor="bg-naver-green"
-            onClick={handleNaverLogin}
-            >
-            네이버로 시작하기
-          </Button>
-          <Button
-            size="large"
-            fullWidth
-            onClick={handleGoogleLogin}
-            >
-            구글로 시작하기
-          </Button>
+          <a href="/oauth2/authorization/kakao">
+            <Button
+              size="large"
+              fullWidth
+              bgColor="bg-kakao-yellow"
+              >
+              카카오로 시작하기
+            </Button>
+          </a>
+          <a href="/oauth2/authorization/naver">
+            <Button
+              size="large"
+              fullWidth
+              bgColor="bg-naver-green"
+              >
+              네이버로 시작하기
+            </Button>
+          </a>
+          <a href="/oauth2/authorization/google">
+            <Button
+              size="large"
+              fullWidth
+              >
+              구글로 시작하기
+            </Button>
+          </a>
         </div>
 
         {/* 구분선 */}
@@ -86,7 +98,9 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-6 py-3.5 rounded-md bg-[#2F2F2F] placeholder-white text-white font-semibold focus:outline focus:outline-white" />
-              
+            
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
             <Button
               size="large"
               fullWidth
