@@ -2,9 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom"
 import { setAccessTokenToState } from "../../stores/authStore";
 
-
 export default function OAuth2RedirectPage() {
-
   const navigate = useNavigate();
   const hasProcessedToken = useRef(false);
 

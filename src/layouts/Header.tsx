@@ -3,7 +3,7 @@ import type React from "react";
 import { FiMenu } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import LogoutButton from "../components/common/LogoutButton";
-import useAuthStore from "../store/authStore";
+import useAuthStore from "../stores/authStore";
 
 interface HeaderProps {
   className?: string;

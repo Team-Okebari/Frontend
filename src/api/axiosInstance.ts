@@ -4,7 +4,6 @@ import axios from "axios";
 import { clearTokenState, getAccessTokenFromState, setAccessTokenToState} from "../stores/authStore";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:8000",   // 백엔드 주소
   withCredentials: true               // refrash token 쿠키 자동 전송
 });
 
@@ -51,10 +50,15 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config as any;
+    const originalRequest = error.config;
 
     // 401 오류, 재시도 요청 아닐 때
     if(error.response.status === 401 && originalRequest && !originalRequest._retry) {
+      // 로그인 또는 회원가입 요청에 대한 401은 토큰 재발급을 시도하지 않고 바로 에러를 반환
+      if (originalRequest.url === '/api/auth/login' || originalRequest.url === '/api/auth/signup') {
+        return Promise.reject(error);
+      }
+
       // 토큰 재발급 진행중인 경우
       if(isRefreshing){
         return new Promise((resolve, reject) => {

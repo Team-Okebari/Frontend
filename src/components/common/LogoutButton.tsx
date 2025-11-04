@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
-import { clearAuthState } from '../../store/authStore';
+import { clearTokenState } from '../../stores/authStore';
 import Button from './Button';
 
 const LogoutButton: React.FC = () => {
@@ -10,7 +10,7 @@ const LogoutButton: React.FC = () => {
     try {
       const response = await axiosInstance.post('/api/auth/logout', {});
       
-      clearAuthState(); // 모든 로컬 인증 상태 초기화
+      clearTokenState(); // 모든 로컬 인증 상태 초기화
 
       const socialLogoutUrl = response.data.data;
       if (socialLogoutUrl) {
@@ -23,7 +23,7 @@ const LogoutButton: React.FC = () => {
 
     } catch (error: unknown) {
       // 에러가 발생하더라도 로컬 상태는 모두 지우고 로그인 페이지로 보냄
-      clearAuthState();
+      clearTokenState();
       navigate('/login', { replace: true });
     }
   };
