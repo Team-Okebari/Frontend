@@ -1,15 +1,18 @@
-import axios from 'axios';
-import { getAccessTokenFromState, clearAuthState, saveAccessTokenToState } from '../store/authStore'; // Zustand 스토어에서 가져올 함수
+// src/api/axiosInstance.ts
+
+import axios from "axios";
+import { clearTokenState, getAccessTokenFromState, setAccessTokenToState} from "../stores/authStore";
 
 const axiosInstance = axios.create({
-  withCredentials: true, // Refresh Token 쿠키 전송을 위해 필수!
+  baseURL: "http://localhost:8000",   // 백엔드 주소
+  withCredentials: true               // refrash token 쿠키 자동 전송
 });
 
-// 요청 인터셉터: 모든 요청에 Access Token을 자동으로 추가
+// 요청 인터셉터 : 모든 요청에 Access Token 추가
 axiosInstance.interceptors.request.use(
   (config) => {
     const accessToken = getAccessTokenFromState();
-    if (accessToken) {
+    if(accessToken) {
       config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
     return config;
@@ -19,13 +22,17 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터 (Access Token 만료 및 재발급 로직은 나중에 추가)
+// 응답 인터셉터
+
+// 토큰 재발급 요청 진행중 확인
 let isRefreshing = false;
+// 재발급이 끝나길 기다리는 요청들 쌓아두는 큐
 let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: unknown) => void; }[] = [];
 
+// 토큰 재발급이 끝난 뒤 호출
 const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach(prom => {
-    if (error) {
+    if(error) {
       prom.reject(error);
     } else {
       prom.resolve(token);
@@ -38,22 +45,23 @@ axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
+  // axios 오류, 응답 없을 시 reject
   async (error: unknown) => {
-    if (!axios.isAxiosError(error) || !error.response) {
+    if(!axios.isAxiosError(error) || !error.response){
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config;
+    const originalRequest = error.config as any;
 
-    // 401 에러이고, 재시도한 요청이 아닐 때
-    if (error.response.status === 401 && originalRequest && !originalRequest._retry) {
-      if (isRefreshing) {
-        // 토큰 재발급이 이미 진행 중인 경우, 큐에 추가
+    // 401 오류, 재시도 요청 아닐 때
+    if(error.response.status === 401 && originalRequest && !originalRequest._retry) {
+      // 토큰 재발급 진행중인 경우
+      if(isRefreshing){
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         }).then(token => {
-          if (originalRequest.headers) {
-            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+          if(originalRequest.headers) {
+            originalRequest.headers['Authorization'] = 'Bearer' + token;
           }
           return axiosInstance(originalRequest);
         });
@@ -62,30 +70,31 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      try {
+      try{
         // 토큰 재발급 API 호출
         const reissueResponse = await axiosInstance.post('/api/auth/reissue', {});
         const { accessToken: newAccessToken } = reissueResponse.data.data;
 
-        // 1. 새로 발급받은 Access Token을 상태에 저장
-        saveAccessTokenToState(newAccessToken);
+        // 새로 발급받은 Access Token 저장
+        setAccessTokenToState(newAccessToken);
 
-        // 2. 원래 요청의 헤더를 새 토큰으로 교체
-        if (originalRequest.headers) {
+        // 원래 요청의 헤더를 새 토큰으로 교체
+        if(originalRequest.headers) {
           originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         }
-        
-        // 3. 대기열에 있던 모든 요청들을 새 토큰으로 재실행
+
+        // 대기열에 있던 모든 요청들을 새 토큰으로 재실행
         processQueue(null, newAccessToken);
 
-        // 4. 원래 실패했던 요청 재실행
+        // 실패했던 요청 재실행
         return axiosInstance(originalRequest);
 
       } catch (reissueError: unknown) {
-        // Refresh Token마저 만료된 경우
+        // refresh token 도 만료된 경우
         processQueue(reissueError, null);
-        clearAuthState(); // 모든 인증 상태 초기화 (직접 구현)
-        window.location.href = '/login'; // 로그인 페이지로 강제 이동
+        // 토큰 클리어
+        clearTokenState();
+        window.location.href = '/login';
         return Promise.reject(reissueError);
       } finally {
         isRefreshing = false;

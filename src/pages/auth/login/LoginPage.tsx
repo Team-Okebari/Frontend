@@ -1,39 +1,42 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Button from "../../../components/common/Button";
 import { Link, useNavigate } from "react-router-dom";
+import { loginSchema } from "../../../schemas/loginSchema";
 import axiosInstance from "../../../api/axiosInstance";
-import useAuthStore, { saveAccessTokenToState } from "../../../store/authStore";
-import * as axios from "axios";
+import { setAccessTokenToState } from "../../../stores/authStore";
+import axios from "axios";
+import SocialLoginButtons from "./SocialLoginButtons";
 
 export default function LoginPage() {
 
   const navigate = useNavigate();
-  const { accessToken } = useAuthStore();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  useEffect(() => {
-    if (accessToken) {
-      navigate('/main', { replace: true });
-    }
-  }, [accessToken, navigate]);
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // 에러 메시지 초기화
-    try {
-      const response = await axiosInstance.post('/api/auth/login', { email, password });
-      const { accessToken } = response.data.data;
+    setError("");
+    // 입력값 검사
+    const result = loginSchema.safeParse({ email, password });
 
-      saveAccessTokenToState(accessToken);
-      navigate('/', { replace: true });
-    } catch (err: unknown) {
-      console.error("로그인 실패:", err);
-      if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data?.error?.message || "이메일 또는 비밀번호가 일치하지 않습니다.");
+    if(!result.success){
+      const firstError = result.error.issues[0];
+      setError(firstError.message);
+      return;
+    }
+
+    try{
+      const response = await axiosInstance.post("/api/auth/login", {email, password});
+      const { accessToken } =response.data.data;
+      setAccessTokenToState(accessToken);
+
+      navigate("/", {replace: true});
+    } catch(err: unknown) {
+      if(axios.isAxiosError(err) && err.response){
+        setError(err.response.data?.error?.message || "이메일 또는 비밀번호가 일치하지 않습니다");
       } else {
-        setError("로그인 중 알 수 없는 오류가 발생했습니다.");
+        setError("로그인 중 알 수 없는 오류가 발생했습니다");
       }
     }
   }
@@ -50,34 +53,7 @@ export default function LoginPage() {
       <div className="w-full px-8 space-y-8">
 
         {/* SNS 로그인 */}
-        <div className="space-y-1.5 py-6">
-          <a href="/oauth2/authorization/kakao">
-            <Button
-              size="large"
-              fullWidth
-              bgColor="bg-kakao-yellow"
-              >
-              카카오로 시작하기
-            </Button>
-          </a>
-          <a href="/oauth2/authorization/naver">
-            <Button
-              size="large"
-              fullWidth
-              bgColor="bg-naver-green"
-              >
-              네이버로 시작하기
-            </Button>
-          </a>
-          <a href="/oauth2/authorization/google">
-            <Button
-              size="large"
-              fullWidth
-              >
-              구글로 시작하기
-            </Button>
-          </a>
-        </div>
+        <SocialLoginButtons />
 
         {/* 구분선 */}
         <div className="border-t border-white" />
@@ -98,9 +74,13 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-6 py-3.5 rounded-md bg-[#2F2F2F] placeholder-white text-white font-semibold focus:outline focus:outline-white" />
-            
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
+            {/* 에러 메시지 */}
+            {error && (
+              <div className="flex justify-center py-1">
+                <p className="text-sm text-red-500">{error}</p>
+              </div>
+            )}
             <Button
               size="large"
               fullWidth
@@ -111,16 +91,25 @@ export default function LoginPage() {
         </div>
 
         {/* 하단 링크 버튼 */}
-        <div className="flex justify-center gap-4">
-          {/* 임시로 모두 회원가입페이지로 이동 */}
-          <Link to='/signup' className="text-white text-base font-semibold">
+        <div className="flex justify-center items-center gap-4">
+          <Link
+            to="/signup"
+            className="text-gray-300 text-sm font-normal font-['Pretendard'] leading-5"
+          >
             회원가입
           </Link>
-          <Link to='/signup' className="text-white text-base font-semibold">
+
+          {/* 구분선 */}
+          <div className="w-0 h-3.5 outline outline-1 outline-offset-[-0.5px] outline-neutral-700" />
+
+          <Link
+            to="/signup"
+            className="text-gray-300 text-sm font-normal font-['Pretendard'] leading-5"
+          >
             아이디 찾기
           </Link>
-
         </div>
+
       </div>
     </div>
   )
