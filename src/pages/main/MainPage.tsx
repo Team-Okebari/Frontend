@@ -11,6 +11,7 @@ import { noteApi } from "../../api/noteApi";
 import { ReminderApi } from "../../api/reminderApi";
 import type { ReminderData } from "../../types/reminder";
 import RemindBanner from "../../components/main/RemindBanner";
+import Loading from "../../components/common/Loading";
 
 export default function MainPage() {
 
@@ -98,8 +99,8 @@ export default function MainPage() {
 
   if (loading) {
     return (
-      <div className="w-full h-screen flex justify-center items-center bg-greyscale-900">
-        <p className="text-greyscale-100">로딩중...</p>
+      <div className="w-full h-screen flex">
+        <Loading />
       </div>
     );
   }
@@ -119,7 +120,8 @@ export default function MainPage() {
       <Header />
 
       {/* 리마인드 배너 */}
-      <div className="absolute left-0 top-16">
+
+      <div className="absolute w-full left-0 top-16">
         { surfaceHint === "BANNER" && reminder && (
           <RemindBanner data={reminder} />
         )}
