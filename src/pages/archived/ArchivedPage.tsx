@@ -9,7 +9,6 @@ import { ArchivedApi } from "../../api/archivedApi";
 import Loading from "../../components/common/Loading";
 import useDebounce from "../../hooks/useDebounce";
 
-
 export default function ArchivedPage() {
 
   const [data, setData] = useState<ArchivedNoteSummaryResponse["data"] | null>(null);
@@ -40,7 +39,7 @@ export default function ArchivedPage() {
   },[debouncedKeyword]);
 
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="w-full h-screen flex flex-col">
       <Header />
       <h3 className="px-5 py-6 text-title3 text-greyscale-100">전체 작업노트</h3>
 
@@ -48,7 +47,7 @@ export default function ArchivedPage() {
       <Searchbar
         value={keyword}
         onChange={(value: string) => setKeyword(value)} />
-        {/* 이중 state 함께 관리 */}
+      <div className="w-full h-4" />
 
       {loading && <Loading />}
 
@@ -58,10 +57,11 @@ export default function ArchivedPage() {
           검색결과가 없습니다
         </div>
       )}
-      
-      {!loading && data && data.content.length > 0 && (
-        <ArchivedList notes={data.content} />
-      )}
+      <div className="flex-1 overflow-y-auto">
+        {!loading && data && data.content.length > 0 && (
+          <ArchivedList notes={data.content} />
+        )}
+      </div>
     </div>
   )
 }
