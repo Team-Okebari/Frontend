@@ -17,6 +17,13 @@ export default function RemindBanner({ data }: RemindBannerProps) {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isVisible, setIsVisible] = useState<boolean>(true);
 
+  const LABEL_MAP: Record<string, string> = {
+    BOOKMARK: "북마크",
+    ANSWER:   "답변",
+  };
+
+  const label = LABEL_MAP[data.sourceType] ?? "";
+
   const handletoNote = () => {
     navigate(`/note/${data.noteId}`);
   }
@@ -55,7 +62,11 @@ export default function RemindBanner({ data }: RemindBannerProps) {
             </div>
             {/* 텍스트 */}
             <div className="flex flex-col justify-center text-start gap-1">
-              <h4 className="text-title4 text-greyscale-100">잊고 있는 작업노트</h4>
+              {label === '북마크' ? (
+                <h4 className="text-title4 text-greyscale-100">{`내가 ${label}했던 노트`}</h4>
+              ) : (
+                <h4 className="text-title4 text-greyscale-100">{`내가 ${label}을 남긴 노트`}</h4>
+              )}
               <p className="text-caption text-greyscale-200 line-clamp-1">{data.title}</p>
             </div>
           </div>
@@ -81,6 +92,5 @@ export default function RemindBanner({ data }: RemindBannerProps) {
           onConfirm={handleDismissBanner} />
       )}
     </>
-
   )
 }
