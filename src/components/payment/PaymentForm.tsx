@@ -24,7 +24,7 @@ export default function PaymentForm() {
   const [error, setError] = useState<string | null>(null);
 
   const PAY_TYPES: Record<string, string> = {
-    CARD: '신용/체크카드',
+    CARD: '카드/간편결제',
     VIRTUAL_ACCOUNT: '가상계좌',
     TRANSFER: '계좌이체',
     MOBILE_PHONE: '휴대폰',
