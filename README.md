@@ -4,8 +4,7 @@
 - [Demo ▶️ Youtube 바로가기](https://youtube.com/shorts/tryKJCuCI2Y)
 - [배포 링크 🌐 바로가기](https://www.sparki-today.com/)
 
-> **디자이너를 위한 영감 및 레퍼런스 관리 플랫폼 'Sparki'의 백엔드** 레포지토리입니다. </br>
-> Spring Boot, JPA, 다양한 클라우드 서비스를 기반으로 사용자 인증, 콘텐츠 관리, 구독 및 결제 API를 제공합니다.
+> **디자이너를 위한 영감 및 레퍼런스 관리 플랫폼 'Sparki'의 프론트엔드** 레포지토리입니다. </br>
 <img width="1920" height="1080" alt="1" src="https://github.com/user-attachments/assets/60f75e58-1df1-44ce-9a81-4b3c909a53df" />
 <img width="1920" height="1080" alt="11" src="https://github.com/user-attachments/assets/1c2ecb58-7e70-4721-bf20-0025aeaae75e" />
 <img width="1920" height="1080" alt="12" src="https://github.com/user-attachments/assets/243cdfe6-71ac-44b6-bde5-b7c787002b14" />
